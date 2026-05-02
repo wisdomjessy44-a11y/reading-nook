@@ -1124,3 +1124,256 @@ a:hover {
     gap: 0.5rem;
     align-items: center;
 }
+
+
+/* ════════════════════════════════════════
+   WEBNOVEL-STYLE EPUB READER
+   ════════════════════════════════════════ */
+
+/* ── Top bar ── */
+.nr-topbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem 1.25rem;
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--mist);
+    position: sticky;
+    top: 52px;
+    z-index: 50;
+    flex-wrap: wrap;
+}
+
+.nr-back {
+    font-size: 0.9rem;
+    color: var(--bark);
+    white-space: nowrap;
+}
+
+.nr-book-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.nr-title {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--bark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nr-author {
+    font-size: 0.78rem;
+    color: #a09080;
+}
+
+.nr-settings-btn {
+    background: var(--mist);
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--bark);
+    white-space: nowrap;
+}
+
+.nr-settings-btn:hover { background: #d5c8b8; }
+
+/* ── Settings panel ── */
+.nr-settings-panel {
+    display: none;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: var(--warm-white);
+    border-bottom: 2px solid var(--mist);
+}
+
+.nr-settings-open {
+    display: flex !important;
+}
+
+.nr-setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--bark);
+}
+
+.nr-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nr-btn-group button {
+    background: var(--mist);
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.3rem 0.7rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--bark);
+    transition: background 0.1s;
+}
+
+.nr-btn-group button:hover { background: #d5c8b8; }
+
+.nr-btn-group span {
+    min-width: 36px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--bark);
+}
+
+.theme-btn { font-size: 0.8rem !important; padding: 0.3rem 0.6rem !important; }
+.theme-light { background: #fff !important; border: 1px solid var(--mist) !important; color: #2c2416 !important; }
+.theme-sepia  { background: #f5e6c8 !important; color: #5c3d2e !important; }
+.theme-dark   { background: #2c2416 !important; color: #e8d5b8 !important; }
+
+/* ── Progress ── */
+.nr-progress-track {
+    height: 4px;
+    background: var(--mist);
+    width: 100%;
+}
+
+.nr-progress-fill {
+    height: 100%;
+    background: var(--amber);
+    transition: width 0.3s ease;
+    min-width: 4px;
+}
+
+.nr-progress-label {
+    text-align: center;
+    font-size: 0.78rem;
+    color: #a09080;
+    padding: 0.25rem 0;
+}
+
+/* ── Chapter navigation ── */
+.nr-chapter-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--mist);
+    flex-wrap: wrap;
+}
+
+.nr-ch-btn {
+    background: var(--mist);
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--bark);
+    white-space: nowrap;
+    transition: background 0.1s;
+}
+
+.nr-ch-btn:hover:not(:disabled) { background: #d5c8b8; }
+.nr-ch-btn:disabled { opacity: 0.4; cursor: default; }
+
+.nr-ch-select {
+    flex: 1;
+    min-width: 0;
+    padding: 0.4rem 0.6rem;
+    border: 1.5px solid var(--mist);
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    background: var(--cream);
+    color: var(--ink);
+}
+
+/* ── Main reader area ── */
+.nr-reader {
+    min-height: 70vh;
+    max-height: 75vh;
+    overflow-y: auto;
+    padding: 2rem 1rem;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* Light theme */
+.nr-theme-light {
+    background: #ffffff;
+    color: #2c2416;
+}
+
+/* Sepia theme — warm, easy on eyes */
+.nr-theme-sepia {
+    background: #f8f0e0;
+    color: #4a3520;
+}
+
+/* Dark theme — for night reading */
+.nr-theme-dark {
+    background: #1a1410;
+    color: #e0d0b8;
+}
+
+/* ── Reading content ── */
+.nr-content {
+    max-width: 680px;
+    margin: 0 auto;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 1.8;
+}
+
+.nr-content p {
+    margin-bottom: 1.2em;
+    text-indent: 1.5em;
+}
+
+.nr-content p:first-of-type {
+    text-indent: 0;
+}
+
+.nr-chapter-heading,
+.nr-content h1,
+.nr-content h2,
+.nr-content h3 {
+    font-family: var(--font-serif);
+    text-align: center;
+    margin: 1.5rem 0 2rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-indent: 0 !important;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    padding-bottom: 1rem;
+}
+
+.nr-theme-dark .nr-content h1,
+.nr-theme-dark .nr-content h2,
+.nr-theme-dark .nr-content h3,
+.nr-theme-dark .nr-chapter-heading {
+    border-bottom-color: rgba(255,255,255,0.1);
+}
+
+.nr-content em, .nr-content i { font-style: italic; }
+.nr-content strong, .nr-content b { font-weight: 600; }
+
+.nr-loading {
+    text-align: center;
+    padding: 3rem;
+    color: #a09080;
+    font-style: italic;
+}

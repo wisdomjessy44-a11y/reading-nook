@@ -42,14 +42,14 @@
                     Upload PDF <span class="optional">(optional — upload to read inside the app)</span>
                 </label>
                 <div class="file-upload-wrap">
-                    <input type="file" id="pdf_file" name="pdf_file"
-                           accept=".pdf" class="file-input">
+                    <input type="file" id="book_file" name="book_file"
+                           accept=".epub,.pdf,.txt" class="file-input">
                     <label for="pdf_file" class="file-label">
                         <span class="file-icon">📄</span>
                         <span class="file-text">Choose a PDF file...</span>
                     </label>
                 </div>
-                <small class="char-hint">Max 50 MB. PDF files only.</small>
+                <small class="char-hint">Max 50 MB. EPUB recommended for best reading experience.</small>
             </div>
 
             <div class="form-group form-group--full">
@@ -145,7 +145,7 @@
 
 <script>
 // When a file is selected, update the label to show the filename
-document.getElementById("pdf_file").addEventListener("change", function() {
+document.getElementById("book_file").addEventListener("change", function() {
     const label = document.querySelector(".file-text");
     if (this.files && this.files[0]) {
         label.textContent = "✅ " + this.files[0].name;
