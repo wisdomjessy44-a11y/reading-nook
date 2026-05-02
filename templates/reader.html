@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Reading: {{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="reader-header">
+    <a href="{{ url_for('book_detail', book_id=book.id) }}" class="back-link">← Back</a>
+    <div class="reader-title-wrap">
+        <h2 class="reader-title">{{ book.title }}</h2>
+        <span class="reader-author">{{ book.author }}</span>
+    </div>
+    <!-- Page indicator shown in the header -->
+    <div class="reader-page-info">
+        Page <span id="current-page-display">{{ last_page }}</span>
+        of <span id="total-pages-display">…</span>
+    </div>
+</div>
+
+<!-- ── PDF Viewer ── -->
+<div class="reader-wrap">
+
+    <!-- The <canvas> is where PDF.js draws each page, like painting on a canvas -->
+    <div class="canvas-container">
+        <canvas id="pdf-canvas"></canvas>
+    </div>
+
+    <!-- Navigation controls -->
+    <div class="reader-controls">
+        <button id="btn-prev" class="btn btn-secondary" disabled>← Previous</button>
+
+        <div class="page-jump">
+            <input type="number" id="page-input" min="1" value="{{ last_page }}"
+                   title="Jump to page">
+            <button id="btn-go" class="btn btn-secondary">Go</button>
+        </div>
+
+        <button id="btn-next" class="btn btn-primary">Next →</button>
+    </div>
+
+    <!-- Progress bar at the bottom of the reader -->
+    <div class="reader-progress-wrap">
+        <div class="reader-progress-bar" id="reader-progress-bar"></div>
+    </div>
+    <p class="reader-progress-label" id="reader-progress-label"></p>
+
+</div>
+
+<!--
+    PDF.js — a free, open-source PDF renderer made by Mozilla (the Firefox people).
+    We load it from a CDN (a public server) so you don't need to install anything.
+    It reads the PDF file and draws each page onto the HTML <canvas> element above.
+-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<script>
+// ── Configuration ──
+// These values come from Flask (Jinja2 passes Python variables into JavaScript)
+const PDF_URL   = "{{ pdf_url }}";     // e.g. /uploads/mybook.pdf
+const BOOK_ID   = {{ book_id }};       // e.g. 3
+const START_PAGE = {{ last_page }};    // Where this user last left off
+
+// Tell PDF.js where its worker file lives (required for it to work)
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+// ── State variables ──
+let pdfDoc      = null;   // Will hold the loaded PDF document
+let currentPage = START_PAGE;
+let totalPages  = 0;
+let isRendering = false;  // Prevents double-renders if you click fast
+
+// ── Get references to the HTML elements we'll update ──
+const canvas        = document.getElementById("pdf-canvas");
+const ctx           = canvas.getContext("2d");   // The drawing context
+const btnPrev       = document.getElementById("btn-prev");
+const btnNext       = document.getElementById("btn-next");
+const btnGo         = document.getElementById("btn-go");
+const pageInput     = document.getElementById("page-input");
+const currentDisplay = document.getElementById("current-page-display");
+const totalDisplay  = document.getElementById("total-pages-display");
+const progressBar   = document.getElementById("reader-progress-bar");
+const progressLabel = document.getElementById("reader-progress-label");
+
+// ── Render a specific page number ──
+function renderPage(pageNum) {
+    if (isRendering) return;
+    isRendering = true;
+
+    pdfDoc.getPage(pageNum).then(function(page) {
+        // Scale the PDF to fit nicely in the container
+        const container = document.querySelector(".canvas-container");
+        const containerWidth = container.clientWidth - 32;  // padding
+        const viewport = page.getViewport({ scale: 1 });
+        const scale = containerWidth / viewport.width;
+        const scaledViewport = page.getViewport({ scale: scale });
+
+        // Set canvas size to match the page
+        canvas.width  = scaledViewport.width;
+        canvas.height = scaledViewport.height;
+
+        // Draw the PDF page onto the canvas
+        const renderContext = { canvasContext: ctx, viewport: scaledViewport };
+        page.render(renderContext).promise.then(function() {
+            isRendering = false;
+
+            // Update the UI
+            currentPage = pageNum;
+            currentDisplay.textContent = pageNum;
+            pageInput.value            = pageNum;
+
+            // Update progress bar
+            const pct = Math.round((pageNum / totalPages) * 100);
+            progressBar.style.width    = pct + "%";
+            progressLabel.textContent  = pct + "% through the book";
+
+            // Enable/disable prev & next buttons
+            btnPrev.disabled = (pageNum <= 1);
+            btnNext.disabled = (pageNum >= totalPages);
+
+            // ── Auto-save progress to the server ──
+            // This sends a small background request to Flask's /save-page route.
+            // The user doesn't see anything — it happens silently.
+            fetch("/save-page", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ book_id: BOOK_ID, page: pageNum })
+            });
+        });
+    });
+}
+
+// ── Load the PDF ──
+pdfjsLib.getDocument(PDF_URL).promise.then(function(pdf) {
+    pdfDoc    = pdf;
+    totalPages = pdf.numPages;
+    totalDisplay.textContent = totalPages;
+    pageInput.max = totalPages;
+
+    // Make sure START_PAGE is within valid range
+    const startPage = Math.min(Math.max(1, START_PAGE), totalPages);
+    renderPage(startPage);
+}).catch(function(err) {
+    console.error("PDF load error:", err);
+    document.querySelector(".canvas-container").innerHTML =
+        '<p style="padding:2rem;color:#d45f5f;">❌ Could not load the PDF. Make sure the file was uploaded correctly.</p>';
+});
+
+// ── Button click handlers ──
+btnPrev.addEventListener("click", function() {
+    if (currentPage > 1) renderPage(currentPage - 1);
+});
+
+btnNext.addEventListener("click", function() {
+    if (currentPage < totalPages) renderPage(currentPage + 1);
+});
+
+// Jump to a specific page
+btnGo.addEventListener("click", function() {
+    const target = parseInt(pageInput.value);
+    if (target >= 1 && target <= totalPages) {
+        renderPage(target);
+    }
+});
+
+// Also jump when user presses Enter in the page input
+pageInput.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") btnGo.click();
+});
+
+// ── Keyboard shortcuts ──
+document.addEventListener("keydown", function(e) {
+    if (e.target === pageInput) return;  // Don't interfere when typing in the input
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") btnNext.click();
+    if (e.key === "ArrowLeft"  || e.key === "ArrowUp")   btnPrev.click();
+});
+</script>
+{% endblock %}

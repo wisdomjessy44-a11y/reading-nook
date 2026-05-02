@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Books — Reading Nook{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📚 Library</h1>
+    <p class="page-subtitle">All books in your shared collection.</p>
+</div>
+
+<!-- ── Add Book Form ── -->
+<section class="section">
+    <h2 class="section-title">➕ Add a New Book</h2>
+    <div class="card">
+        <!--
+            enctype="multipart/form-data" is REQUIRED when a form uploads files.
+            Without it, the PDF will never reach Flask.
+        -->
+        <form action="{{ url_for('add_book') }}" method="post"
+              enctype="multipart/form-data" class="form-grid">
+
+            <div class="form-group">
+                <label for="title">Book Title *</label>
+                <input type="text" id="title" name="title"
+                       placeholder="e.g. Atomic Habits" required>
+            </div>
+
+            <div class="form-group">
+                <label for="author">Author *</label>
+                <input type="text" id="author" name="author"
+                       placeholder="e.g. James Clear" required>
+            </div>
+
+            <div class="form-group form-group--full">
+                <label for="link">Link or Notes <span class="optional">(optional)</span></label>
+                <input type="text" id="link" name="link"
+                       placeholder="e.g. https://... or 'Physical copy on shelf'">
+            </div>
+
+            <!-- ── PDF Upload field ── -->
+            <div class="form-group form-group--full">
+                <label for="pdf_file">
+                    Upload PDF <span class="optional">(optional — upload to read inside the app)</span>
+                </label>
+                <div class="file-upload-wrap">
+                    <input type="file" id="pdf_file" name="pdf_file"
+                           accept=".pdf" class="file-input">
+                    <label for="pdf_file" class="file-label">
+                        <span class="file-icon">📄</span>
+                        <span class="file-text">Choose a PDF file...</span>
+                    </label>
+                </div>
+                <small class="char-hint">Max 50 MB. PDF files only.</small>
+            </div>
+
+            <div class="form-group form-group--full">
+                <button type="submit" class="btn btn-primary">Add to Library 📖</button>
+            </div>
+
+        </form>
+    </div>
+</section>
+
+<!-- ── Assign a Book ── -->
+<section class="section">
+    <h2 class="section-title">📌 Assign a Book</h2>
+    <p class="section-hint">Pick a book and choose who should read it.</p>
+    <div class="card">
+        <form action="{{ url_for('assign_book') }}" method="post" class="form-grid">
+
+            <div class="form-group">
+                <label for="assign_book_id">Book</label>
+                <select id="assign_book_id" name="book_id" required>
+                    <option value="">-- Select a book --</option>
+                    {% for book in books %}
+                        <option value="{{ book.id }}">{{ book.title }} — {{ book.author }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="assign_user_id">Assign to</label>
+                <select id="assign_user_id" name="user_id" required>
+                    <option value="">-- Select a reader --</option>
+                    {% for user in all_users %}
+                        <option value="{{ user.id }}"
+                            {% if user.id == current_user_id %}selected{% endif %}>
+                            {{ user.username }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="total_pages">Total Pages <span class="optional">(for progress %)</span></label>
+                <input type="number" id="total_pages" name="total_pages"
+                       placeholder="e.g. 320" min="0">
+            </div>
+
+            <div class="form-group form-group--full">
+                <button type="submit" class="btn btn-secondary">Assign Book 📌</button>
+            </div>
+
+        </form>
+    </div>
+</section>
+
+<!-- ── All Books ── -->
+<section class="section">
+    <h2 class="section-title">📖 All Books ({{ books | length }})</h2>
+
+    {% if books %}
+    <div class="books-grid">
+        {% for book in books %}
+        <div class="book-card">
+            <div class="book-card-body">
+                <h3 class="book-title">
+                    <a href="{{ url_for('book_detail', book_id=book.id) }}">{{ book.title }}</a>
+                </h3>
+                <p class="book-author">by {{ book.author }}</p>
+
+                <!-- Show "Read PDF" button only if a PDF was uploaded -->
+                {% if book.filename %}
+                <a href="{{ url_for('read_book', book_id=book.id) }}"
+                   class="btn btn-read">📖 Read PDF</a>
+                {% endif %}
+
+                {% if book.link %}
+                <a href="{{ book.link }}" class="book-link-ext" target="_blank">🔗 Link</a>
+                {% endif %}
+            </div>
+            <div class="book-card-footer">
+                <span class="book-added-by">Added by {{ book.added_by_name }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No books yet! Add your first one above. 📚</p>
+    </div>
+    {% endif %}
+
+</section>
+{% endblock %}
+
+<script>
+// When a file is selected, update the label to show the filename
+document.getElementById("pdf_file").addEventListener("change", function() {
+    const label = document.querySelector(".file-text");
+    if (this.files && this.files[0]) {
+        label.textContent = "✅ " + this.files[0].name;
+    } else {
+        label.textContent = "Choose a PDF file...";
+    }
+});
+</script>

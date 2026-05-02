@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 
+        The title block lets child templates set their own page title.
+        If they don't, it falls back to "Reading Nook".
+    -->
+    <title>{% block title %}Reading Nook{% endblock %}</title>
+
+    <!-- Google Fonts: a warm, bookish feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Our custom styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- ── Navigation bar ── -->
+    {% if session.get('username') %}
+    <nav class="navbar">
+        <div class="nav-brand">📖 Reading Nook</div>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}" class="nav-link">🏠 Dashboard</a>
+            <a href="{{ url_for('books') }}" class="nav-link">📚 Books</a>
+            <a href="{{ url_for('log_reading') }}" class="nav-link">✏️ Log Reading</a>
+        </div>
+        <div class="nav-user">
+            <span class="nav-username">{{ session.get('username') }}</span>
+            <a href="{{ url_for('logout') }}" class="nav-link logout">Logout</a>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- ── Flash messages (success/error feedback) ── -->
+    <!--
+        Flask's flash() function queues messages.
+        Here we display them at the top of every page.
+        'get_flashed_messages(with_categories=True)' returns pairs like ("success", "Book added!")
+    -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- ── Main page content ── -->
+    <!-- Child templates fill this block with their unique content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>📖 Keep reading, keep growing.</p>
+    </footer>
+
+</body>
+</html>

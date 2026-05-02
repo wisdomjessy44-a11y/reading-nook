@@ -1,0 +1,131 @@
+<!-- templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Reading Nook{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📚 Reading Nook</h1>
+    <p class="page-subtitle">Hello, <strong>{{ current_username }}</strong>! Here's what's happening.</p>
+</div>
+
+<!-- ── Streaks & Current Books Section ── -->
+<section class="section">
+    <h2 class="section-title">🔥 Streaks & Current Reading</h2>
+
+    <div class="user-cards">
+        <!-- Loop over both users' data -->
+        {% for user in user_data %}
+        <div class="user-card {% if user.id == current_user_id %}user-card--mine{% endif %}">
+
+            <div class="user-card-header">
+                <span class="user-avatar">{{ user.username[0] }}</span>  <!-- First letter as avatar -->
+                <div>
+                    <h3>{{ user.username }}</h3>
+                    <!-- Streak display: show flame emoji for each day, max 10 shown -->
+                    <div class="streak-display">
+                        {% if user.streak > 0 %}
+                            <span class="streak-flames">
+                                {% for i in range([user.streak, 10] | min) %}🔥{% endfor %}
+                            </span>
+                            <span class="streak-count">{{ user.streak }} day streak!</span>
+                        {% else %}
+                            <span class="streak-none">No streak yet — log a day! 📖</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Currently assigned books -->
+            <div class="current-books">
+                {% if user.assignments %}
+                    {% for a in user.assignments %}
+                    <div class="book-progress-item">
+                        <a href="{{ url_for('book_detail', book_id=a.book_id) }}" class="book-link">
+                            {{ a.title }}
+                        </a>
+                        <span class="book-author">by {{ a.author }}</span>
+
+                        <!-- Progress bar -->
+                        {% if a.total_pages > 0 %}
+                            {% set pct = [(a.pages_read_total / a.total_pages * 100) | int, 100] | min %}
+                            <div class="progress-bar-wrap">
+                                <div class="progress-bar" style="width: {{ pct }}%"></div>
+                            </div>
+                            <span class="progress-label">{{ a.pages_read_total }} / {{ a.total_pages }} pages ({{ pct }}%)</span>
+                        {% else %}
+                            <span class="progress-label">{{ a.pages_read_total }} pages read</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-books-msg">No books assigned yet. <a href="{{ url_for('books') }}">Add one!</a></p>
+                {% endif %}
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+
+<!-- ── Recent Activity Feed ── -->
+<section class="section">
+    <h2 class="section-title">📝 Recent Activity</h2>
+
+    {% if recent_logs %}
+        <div class="activity-feed">
+            {% for log in recent_logs %}
+            <div class="log-card {% if log.reader_id == current_user_id %}log-card--mine{% endif %}">
+
+                <div class="log-card-header">
+                    <span class="log-who">{{ log.reader_name }}</span>
+                    <span class="log-book">reading <a href="{{ url_for('book_detail', book_id=log.book_id) }}">{{ log.book_title }}</a></span>
+                    <span class="log-date">{{ log.date }}</span>
+                </div>
+
+                <div class="log-card-body">
+                    <span class="log-pages">📄 {{ log.pages_read }} pages</span>
+                    {% if log.note %}
+                        <p class="log-note">"{{ log.note }}"</p>
+                    {% endif %}
+                </div>
+
+                <!-- Reactions section -->
+                <div class="log-card-footer">
+
+                    <!-- Show existing reactions -->
+                    <div class="reactions-display">
+                        {% for r in log.reactions %}
+                            <span class="reaction-badge" title="{{ r.username }}">{{ r.reaction }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Only show reaction buttons if this log is NOT yours -->
+                    {% if log.reader_id != current_user_id %}
+                    <div class="reaction-buttons">
+                        {% for emoji in emoji_options %}
+                        <form action="{{ url_for('react') }}" method="post" class="reaction-form">
+                            <input type="hidden" name="log_id" value="{{ log.id }}">
+                            <input type="hidden" name="reaction" value="{{ emoji }}">
+                            <button type="submit" class="reaction-btn" title="React with {{ emoji }}">
+                                {{ emoji }}
+                            </button>
+                        </form>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No reading logged yet! <a href="{{ url_for('log_reading') }}">Log your first session →</a></p>
+        </div>
+    {% endif %}
+</section>
+
+{% endblock %}

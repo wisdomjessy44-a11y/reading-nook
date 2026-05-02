@@ -1,0 +1,63 @@
+<!-- templates/book_detail.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }} — Reading Nook{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{{ url_for('books') }}" class="back-link">← Back to Library</a>
+    <h1>{{ book.title }}</h1>
+    <p class="page-subtitle">by <strong>{{ book.author }}</strong></p>
+    {% if book.link %}
+        <a href="{{ book.link }}" class="book-link-ext" target="_blank">🔗 Link / Notes</a>
+    {% endif %}
+</div>
+
+
+<!-- Loop over each user's data for this book -->
+{% for ud in user_logs %}
+<section class="section">
+
+    <h2 class="section-title">
+        {{ ud.username }}'s Progress
+        {% if ud.progress > 0 %}
+            — {{ ud.progress }}%
+        {% endif %}
+    </h2>
+
+    <!-- Progress bar -->
+    {% if ud.total_pages > 0 %}
+    <div class="progress-bar-wrap progress-bar-wrap--large">
+        <div class="progress-bar {% if ud.progress == 100 %}progress-bar--complete{% endif %}"
+             style="width: {{ ud.progress }}%">
+        </div>
+    </div>
+    <p class="progress-label">
+        {{ ud.total_pages_read }} of {{ ud.total_pages }} pages read
+        {% if ud.progress == 100 %}🎉 Finished!{% endif %}
+    </p>
+    {% else %}
+    <p class="progress-label">{{ ud.total_pages_read }} pages read total</p>
+    {% endif %}
+
+    <!-- Reading log entries for this user -->
+    {% if ud.logs %}
+    <div class="log-list">
+        {% for log in ud.logs %}
+        <div class="log-entry">
+            <span class="log-date-badge">{{ log.date }}</span>
+            <span class="log-pages-badge">{{ log.pages_read }} pages</span>
+            {% if log.note %}
+                <p class="log-note-text">"{{ log.note }}"</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="no-logs-msg">No reading logged for this book yet.</p>
+    {% endif %}
+
+</section>
+{% endfor %}
+
+{% endblock %}

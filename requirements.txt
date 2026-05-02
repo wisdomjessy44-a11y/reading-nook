@@ -1,0 +1,5 @@
+# requirements.txt
+# These are the Python packages you need to install.
+# Flask is the only external dependency — everything else is built into Python!
+
+flask>=3.0.0
