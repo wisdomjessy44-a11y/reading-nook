@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#5c3d2e"/>
+  <rect x="60" y="140" width="185" height="220" rx="8" fill="#f5e6c8"/>
+  <rect x="267" y="140" width="185" height="220" rx="8" fill="#fdf8f0"/>
+  <rect x="242" y="128" width="28" height="248" rx="6" fill="#c97d2e"/>
+  <line x1="80" y1="185" x2="233" y2="185" stroke="#c8b89a" stroke-width="12" stroke-linecap="round"/>
+  <line x1="80" y1="215" x2="233" y2="215" stroke="#c8b89a" stroke-width="12" stroke-linecap="round"/>
+  <line x1="80" y1="245" x2="233" y2="245" stroke="#c8b89a" stroke-width="12" stroke-linecap="round"/>
+  <line x1="80" y1="275" x2="233" y2="275" stroke="#c8b89a" stroke-width="12" stroke-linecap="round"/>
+  <line x1="80" y1="305" x2="190" y2="305" stroke="#c8b89a" stroke-width="12" stroke-linecap="round"/>
+  <line x1="279" y1="185" x2="432" y2="185" stroke="#d5c5a5" stroke-width="12" stroke-linecap="round"/>
+  <line x1="279" y1="215" x2="432" y2="215" stroke="#d5c5a5" stroke-width="12" stroke-linecap="round"/>
+  <line x1="279" y1="245" x2="432" y2="245" stroke="#d5c5a5" stroke-width="12" stroke-linecap="round"/>
+  <line x1="279" y1="275" x2="432" y2="275" stroke="#d5c5a5" stroke-width="12" stroke-linecap="round"/>
+  <line x1="279" y1="305" x2="380" y2="305" stroke="#d5c5a5" stroke-width="12" stroke-linecap="round"/>
+  <polygon points="400,140 430,140 430,218 415,202 400,218" fill="#c97d2e"/>
+</svg>

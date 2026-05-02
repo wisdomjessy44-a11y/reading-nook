@@ -3,21 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 
-        The title block lets child templates set their own page title.
-        If they don't, it falls back to "Reading Nook".
-    -->
     <title>{% block title %}Reading Nook{% endblock %}</title>
 
-    <!-- Google Fonts: a warm, bookish feel -->
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- PWA: tells phones this site can be installed as an app -->
+    <link rel="manifest" href="/static/manifest.json">
 
-    <!-- Our custom styles -->
+    <!-- Theme color: colors the browser bar on Android to match the app -->
+    <meta name="theme-color" content="#5c3d2e">
+
+    <!-- iOS support: makes it work as a full-screen app on iPhones too -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Reading Nook">
+    <link rel="apple-touch-icon" href="/static/icons/icon.svg">
+
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-    <!-- ── Navigation bar ── -->
     {% if session.get('username') %}
     <nav class="navbar">
         <div class="nav-brand">📖 Reading Nook</div>
@@ -33,12 +37,6 @@
     </nav>
     {% endif %}
 
-    <!-- ── Flash messages (success/error feedback) ── -->
-    <!--
-        Flask's flash() function queues messages.
-        Here we display them at the top of every page.
-        'get_flashed_messages(with_categories=True)' returns pairs like ("success", "Book added!")
-    -->
     {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
             <div class="flash-container">
@@ -49,8 +47,6 @@
         {% endif %}
     {% endwith %}
 
-    <!-- ── Main page content ── -->
-    <!-- Child templates fill this block with their unique content -->
     <main class="main-content">
         {% block content %}{% endblock %}
     </main>
@@ -58,6 +54,50 @@
     <footer class="footer">
         <p>📖 Keep reading, keep growing.</p>
     </footer>
+
+    <!-- PWA install prompt script -->
+    <script>
+    // This listens for the browser's "you can install this app" event
+    // and shows a helpful banner to guide the user
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        deferredPrompt = e;
+
+        // Only show the banner if not already installed
+        if (!window.matchMedia('(display-mode: standalone)').matches) {
+            const banner = document.getElementById('install-banner');
+            if (banner) banner.style.display = 'flex';
+        }
+    });
+
+    function installApp() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(function() {
+                deferredPrompt = null;
+                const banner = document.getElementById('install-banner');
+                if (banner) banner.style.display = 'none';
+            });
+        }
+    }
+
+    function dismissBanner() {
+        const banner = document.getElementById('install-banner');
+        if (banner) banner.style.display = 'none';
+    }
+    </script>
+
+    <!-- Install banner (shown automatically on Android Chrome) -->
+    <div id="install-banner" style="display:none;">
+        <div class="install-banner">
+            <span>📖 Add Reading Nook to your home screen!</span>
+            <div class="install-banner-btns">
+                <button onclick="installApp()" class="btn btn-primary" style="padding:0.3rem 0.8rem;font-size:0.85rem;">Install</button>
+                <button onclick="dismissBanner()" class="btn" style="padding:0.3rem 0.8rem;font-size:0.85rem;background:transparent;color:#fff;">✕</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
