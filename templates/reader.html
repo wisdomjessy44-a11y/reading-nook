@@ -8,24 +8,36 @@
         <h2 class="reader-title">{{ book.title }}</h2>
         <span class="reader-author">{{ book.author }}</span>
     </div>
-    <!-- Page indicator shown in the header -->
     <div class="reader-page-info">
         Page <span id="current-page-display">{{ last_page }}</span>
         of <span id="total-pages-display">…</span>
     </div>
 </div>
 
-<!-- ── PDF Viewer ── -->
-<div class="reader-wrap">
+<!-- ── Toolbar: zoom + fullscreen ── -->
+<div class="reader-toolbar">
+    <div class="toolbar-group">
+        <button id="btn-zoom-out" class="tool-btn" title="Zoom out">−</button>
+        <span id="zoom-label" class="zoom-label">100%</span>
+        <button id="btn-zoom-in"  class="tool-btn" title="Zoom in">+</button>
+        <button id="btn-zoom-fit" class="tool-btn" title="Fit to screen">⊡ Fit</button>
+    </div>
+    <div class="toolbar-group">
+        <button id="btn-fullscreen" class="tool-btn" title="Full screen">⛶ Full Screen</button>
+    </div>
+</div>
 
-    <!-- The <canvas> is where PDF.js draws each page, like painting on a canvas -->
-    <div class="canvas-container">
+<!-- ── PDF Viewer ── -->
+<div class="reader-wrap" id="reader-wrap">
+
+    <!-- Scrollable canvas area -->
+    <div class="canvas-scroll-area" id="canvas-scroll-area">
         <canvas id="pdf-canvas"></canvas>
     </div>
 
     <!-- Navigation controls -->
     <div class="reader-controls">
-        <button id="btn-prev" class="btn btn-secondary" disabled>← Previous</button>
+        <button id="btn-prev" class="btn btn-secondary" disabled>← Prev</button>
 
         <div class="page-jump">
             <input type="number" id="page-input" min="1" value="{{ last_page }}"
@@ -36,7 +48,7 @@
         <button id="btn-next" class="btn btn-primary">Next →</button>
     </div>
 
-    <!-- Progress bar at the bottom of the reader -->
+    <!-- Progress bar -->
     <div class="reader-progress-wrap">
         <div class="reader-progress-bar" id="reader-progress-bar"></div>
     </div>
@@ -44,81 +56,78 @@
 
 </div>
 
-<!--
-    PDF.js — a free, open-source PDF renderer made by Mozilla (the Firefox people).
-    We load it from a CDN (a public server) so you don't need to install anything.
-    It reads the PDF file and draws each page onto the HTML <canvas> element above.
--->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <script>
-// ── Configuration ──
-// These values come from Flask (Jinja2 passes Python variables into JavaScript)
-const PDF_URL   = "{{ pdf_url }}";     // e.g. /uploads/mybook.pdf
-const BOOK_ID   = {{ book_id }};       // e.g. 3
-const START_PAGE = {{ last_page }};    // Where this user last left off
+// ── Config ──
+const PDF_URL    = "{{ pdf_url }}";
+const BOOK_ID    = {{ book_id }};
+const START_PAGE = {{ last_page }};
 
-// Tell PDF.js where its worker file lives (required for it to work)
 pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-// ── State variables ──
-let pdfDoc      = null;   // Will hold the loaded PDF document
+// ── State ──
+let pdfDoc      = null;
 let currentPage = START_PAGE;
 let totalPages  = 0;
-let isRendering = false;  // Prevents double-renders if you click fast
+let isRendering = false;
+let currentScale = null;   // null = auto-fit on first load
 
-// ── Get references to the HTML elements we'll update ──
-const canvas        = document.getElementById("pdf-canvas");
-const ctx           = canvas.getContext("2d");   // The drawing context
-const btnPrev       = document.getElementById("btn-prev");
-const btnNext       = document.getElementById("btn-next");
-const btnGo         = document.getElementById("btn-go");
-const pageInput     = document.getElementById("page-input");
+// ── Elements ──
+const canvas         = document.getElementById("pdf-canvas");
+const ctx            = canvas.getContext("2d");
+const btnPrev        = document.getElementById("btn-prev");
+const btnNext        = document.getElementById("btn-next");
+const btnGo          = document.getElementById("btn-go");
+const pageInput      = document.getElementById("page-input");
 const currentDisplay = document.getElementById("current-page-display");
-const totalDisplay  = document.getElementById("total-pages-display");
-const progressBar   = document.getElementById("reader-progress-bar");
-const progressLabel = document.getElementById("reader-progress-label");
+const totalDisplay   = document.getElementById("total-pages-display");
+const progressBar    = document.getElementById("reader-progress-bar");
+const progressLabel  = document.getElementById("reader-progress-label");
+const zoomLabel      = document.getElementById("zoom-label");
+const scrollArea     = document.getElementById("canvas-scroll-area");
 
-// ── Render a specific page number ──
+// ── Render a page at current scale ──
 function renderPage(pageNum) {
     if (isRendering) return;
     isRendering = true;
 
     pdfDoc.getPage(pageNum).then(function(page) {
-        // Scale the PDF to fit nicely in the container
-        const container = document.querySelector(".canvas-container");
-        const containerWidth = container.clientWidth - 32;  // padding
-        const viewport = page.getViewport({ scale: 1 });
-        const scale = containerWidth / viewport.width;
-        const scaledViewport = page.getViewport({ scale: scale });
+        // If no scale set yet, auto-fit to container width
+        if (currentScale === null) {
+            const containerWidth = scrollArea.clientWidth - 40;
+            const baseViewport   = page.getViewport({ scale: 1 });
+            currentScale = containerWidth / baseViewport.width;
+            // Don't go below 1.2 so text is always readable
+            currentScale = Math.max(currentScale, 1.2);
+        }
 
-        // Set canvas size to match the page
-        canvas.width  = scaledViewport.width;
-        canvas.height = scaledViewport.height;
+        const viewport = page.getViewport({ scale: currentScale });
+        canvas.width   = viewport.width;
+        canvas.height  = viewport.height;
 
-        // Draw the PDF page onto the canvas
-        const renderContext = { canvasContext: ctx, viewport: scaledViewport };
-        page.render(renderContext).promise.then(function() {
+        page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
             isRendering = false;
 
-            // Update the UI
+            // Update UI
             currentPage = pageNum;
             currentDisplay.textContent = pageNum;
             pageInput.value            = pageNum;
+            zoomLabel.textContent      = Math.round(currentScale * 100) + "%";
 
-            // Update progress bar
+            // Progress
             const pct = Math.round((pageNum / totalPages) * 100);
-            progressBar.style.width    = pct + "%";
-            progressLabel.textContent  = pct + "% through the book";
+            progressBar.style.width   = pct + "%";
+            progressLabel.textContent = pct + "% through the book";
 
-            // Enable/disable prev & next buttons
             btnPrev.disabled = (pageNum <= 1);
             btnNext.disabled = (pageNum >= totalPages);
 
-            // ── Auto-save progress to the server ──
-            // This sends a small background request to Flask's /save-page route.
-            // The user doesn't see anything — it happens silently.
+            // Scroll back to top of page on page turn
+            scrollArea.scrollTop = 0;
+
+            // Auto-save progress
             fetch("/save-page", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -128,23 +137,73 @@ function renderPage(pageNum) {
     });
 }
 
-// ── Load the PDF ──
+// ── Load PDF ──
 pdfjsLib.getDocument(PDF_URL).promise.then(function(pdf) {
-    pdfDoc    = pdf;
+    pdfDoc     = pdf;
     totalPages = pdf.numPages;
     totalDisplay.textContent = totalPages;
     pageInput.max = totalPages;
-
-    // Make sure START_PAGE is within valid range
     const startPage = Math.min(Math.max(1, START_PAGE), totalPages);
     renderPage(startPage);
 }).catch(function(err) {
-    console.error("PDF load error:", err);
-    document.querySelector(".canvas-container").innerHTML =
-        '<p style="padding:2rem;color:#d45f5f;">❌ Could not load the PDF. Make sure the file was uploaded correctly.</p>';
+    scrollArea.innerHTML =
+        '<p style="padding:2rem;color:#d45f5f;">❌ Could not load PDF. Please re-upload the file.</p>';
 });
 
-// ── Button click handlers ──
+// ── Zoom controls ──
+const ZOOM_STEP = 0.2;
+const ZOOM_MIN  = 0.5;
+const ZOOM_MAX  = 4.0;
+
+document.getElementById("btn-zoom-in").addEventListener("click", function() {
+    if (currentScale < ZOOM_MAX) {
+        currentScale = Math.min(currentScale + ZOOM_STEP, ZOOM_MAX);
+        renderPage(currentPage);
+    }
+});
+
+document.getElementById("btn-zoom-out").addEventListener("click", function() {
+    if (currentScale > ZOOM_MIN) {
+        currentScale = Math.max(currentScale - ZOOM_STEP, ZOOM_MIN);
+        renderPage(currentPage);
+    }
+});
+
+// Fit to screen width
+document.getElementById("btn-zoom-fit").addEventListener("click", function() {
+    currentScale = null;   // Reset — renderPage will auto-fit
+    renderPage(currentPage);
+});
+
+// ── Full screen ──
+const readerWrap = document.getElementById("reader-wrap");
+document.getElementById("btn-fullscreen").addEventListener("click", function() {
+    if (!document.fullscreenElement) {
+        readerWrap.requestFullscreen().catch(function(err) {
+            alert("Full screen not supported on this browser.");
+        });
+        this.textContent = "✕ Exit Full Screen";
+    } else {
+        document.exitFullscreen();
+        this.textContent = "⛶ Full Screen";
+    }
+});
+
+document.addEventListener("fullscreenchange", function() {
+    const btn = document.getElementById("btn-fullscreen");
+    if (!document.fullscreenElement) {
+        btn.textContent = "⛶ Full Screen";
+        // Re-fit after exiting fullscreen
+        currentScale = null;
+        renderPage(currentPage);
+    } else {
+        // Fit to full screen width
+        currentScale = null;
+        renderPage(currentPage);
+    }
+});
+
+// ── Navigation ──
 btnPrev.addEventListener("click", function() {
     if (currentPage > 1) renderPage(currentPage - 1);
 });
@@ -153,24 +212,23 @@ btnNext.addEventListener("click", function() {
     if (currentPage < totalPages) renderPage(currentPage + 1);
 });
 
-// Jump to a specific page
 btnGo.addEventListener("click", function() {
     const target = parseInt(pageInput.value);
-    if (target >= 1 && target <= totalPages) {
-        renderPage(target);
-    }
+    if (target >= 1 && target <= totalPages) renderPage(target);
 });
 
-// Also jump when user presses Enter in the page input
 pageInput.addEventListener("keydown", function(e) {
     if (e.key === "Enter") btnGo.click();
 });
 
 // ── Keyboard shortcuts ──
 document.addEventListener("keydown", function(e) {
-    if (e.target === pageInput) return;  // Don't interfere when typing in the input
+    if (e.target === pageInput) return;
     if (e.key === "ArrowRight" || e.key === "ArrowDown") btnNext.click();
     if (e.key === "ArrowLeft"  || e.key === "ArrowUp")   btnPrev.click();
+    if (e.key === "+" || e.key === "=") document.getElementById("btn-zoom-in").click();
+    if (e.key === "-") document.getElementById("btn-zoom-out").click();
+    if (e.key === "f" || e.key === "F") document.getElementById("btn-fullscreen").click();
 });
 </script>
 {% endblock %}

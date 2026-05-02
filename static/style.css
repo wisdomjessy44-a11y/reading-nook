@@ -991,3 +991,107 @@ a:hover {
         padding: 0 0.5rem;
     }
 }
+
+
+/* ════════════════════════════════════════
+   IMPROVED READER — Zoom & Fullscreen
+   ════════════════════════════════════════ */
+
+/* ── Toolbar (zoom + fullscreen buttons) ── */
+.reader-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6rem 1.5rem;
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--mist);
+    flex-wrap: wrap;
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.tool-btn {
+    background: var(--mist);
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.4rem 0.85rem;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--bark);
+    transition: background 0.15s, transform 0.1s;
+}
+
+.tool-btn:hover {
+    background: #d5c8b8;
+    transform: translateY(-1px);
+}
+
+.zoom-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--bark);
+    min-width: 44px;
+    text-align: center;
+}
+
+/* ── Scrollable canvas area ── */
+/* The canvas now lives inside a scrollable box
+   so you can scroll up/down within a page when zoomed in */
+.canvas-scroll-area {
+    width: 100%;
+    max-height: 75vh;        /* Takes up most of the screen height */
+    overflow: auto;          /* Scrollable when zoomed in */
+    background: #e8e0d5;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--mist);
+    box-shadow: 0 4px 24px var(--shadow);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 1rem;
+}
+
+#pdf-canvas {
+    display: block;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+
+/* ── Full screen mode ── */
+/* When the reader-wrap goes fullscreen, make it fill the whole screen */
+#reader-wrap:fullscreen {
+    background: #2c2416;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    overflow: auto;
+}
+
+#reader-wrap:fullscreen .canvas-scroll-area {
+    max-height: calc(100vh - 140px);
+    width: 100%;
+    max-width: 900px;
+}
+
+#reader-wrap:fullscreen .reader-controls {
+    background: rgba(255,255,255,0.1);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+}
+
+#reader-wrap:fullscreen .reader-progress-wrap {
+    width: 100%;
+    max-width: 900px;
+}
+
+#reader-wrap:fullscreen .reader-progress-label {
+    color: #d5c8b8;
+}
