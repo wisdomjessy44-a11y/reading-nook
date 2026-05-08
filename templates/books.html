@@ -36,19 +36,18 @@
                        placeholder="e.g. https://... or 'Physical copy on shelf'">
             </div>
 
-            <!-- ── PDF Upload field ── -->
+            <!-- ── Book file upload ── -->
             <div class="form-group form-group--full">
-                <label for="pdf_file">
-                    Upload PDF <span class="optional">(optional — upload to read inside the app)</span>
+                <label for="book_file">
+                    Upload Book File <span class="optional">(optional — upload to read inside the app)</span>
                 </label>
-                <div class="file-upload-wrap">
-                    <input type="file" id="book_file" name="book_file"
-                           accept=".epub,.pdf,.txt" class="file-input">
-                    <label for="pdf_file" class="file-label">
-                        <span class="file-icon">📄</span>
-                        <span class="file-text">Choose a PDF file...</span>
-                    </label>
-                </div>
+                <!--
+                    The input is visible on mobile — no custom styling tricks.
+                    This is the most reliable way to open the file picker on phones.
+                -->
+                <input type="file" id="book_file" name="book_file"
+                       accept=".epub,.pdf,.txt" class="mobile-file-input">
+                <p id="file-chosen" class="file-chosen-label"></p>
                 <small class="char-hint">Max 50 MB. EPUB recommended for best reading experience.</small>
             </div>
 
@@ -144,13 +143,13 @@
 {% endblock %}
 
 <script>
-// When a file is selected, update the label to show the filename
 document.getElementById("book_file").addEventListener("change", function() {
-    const label = document.querySelector(".file-text");
+    const label = document.getElementById("file-chosen");
     if (this.files && this.files[0]) {
         label.textContent = "✅ " + this.files[0].name;
+        label.style.color = "#4a7c59";
     } else {
-        label.textContent = "Choose a PDF file...";
+        label.textContent = "";
     }
 });
 </script>

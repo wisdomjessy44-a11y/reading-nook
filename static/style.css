@@ -1377,3 +1377,24 @@ a:hover {
     color: #a09080;
     font-style: italic;
 }
+
+/* ── Mobile-friendly file input ── */
+/* Visible input works on all phones — no tricks needed */
+.mobile-file-input {
+    width: 100%;
+    padding: 0.6rem 0.5rem;
+    border: 2px dashed var(--amber);
+    border-radius: var(--radius);
+    background: var(--cream);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.file-chosen-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+    min-height: 1.2em;
+}
